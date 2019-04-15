@@ -414,22 +414,16 @@ module WinRM
       # @return [String] the unencrypted response string
       def winrm_decrypt(str)
         @logger.debug "Decrypting SOAP message:\n#{str}"
-        iov_cnt = 3
+        iov_cnt = 2
         iov = FFI::MemoryPointer.new(GSSAPI::LibGSSAPI::GssIOVBufferDesc.size * iov_cnt)
 
         iov0 = GSSAPI::LibGSSAPI::GssIOVBufferDesc.new(FFI::Pointer.new(iov.address))
-        iov0[:type] = (GSSAPI::LibGSSAPI::GSS_IOV_BUFFER_TYPE_HEADER | \
-          GSSAPI::LibGSSAPI::GSS_IOV_BUFFER_FLAG_ALLOCATE)
+        iov0[:type] = GSSAPI::LibGSSAPI::GSS_IOV_BUFFER_TYPE_HEADER
 
         iov1 = GSSAPI::LibGSSAPI::GssIOVBufferDesc.new(
           FFI::Pointer.new(iov.address + (GSSAPI::LibGSSAPI::GssIOVBufferDesc.size * 1))
         )
         iov1[:type] = GSSAPI::LibGSSAPI::GSS_IOV_BUFFER_TYPE_DATA
-
-        iov2 = GSSAPI::LibGSSAPI::GssIOVBufferDesc.new(
-          FFI::Pointer.new(iov.address + (GSSAPI::LibGSSAPI::GssIOVBufferDesc.size * 2))
-        )
-        iov2[:type] = GSSAPI::LibGSSAPI::GSS_IOV_BUFFER_TYPE_DATA
 
         str.force_encoding('BINARY')
         str.sub!(%r{^.*Content-Type: application\/octet-stream\r\n(.*)--Encrypted.*$}m, '\1')
